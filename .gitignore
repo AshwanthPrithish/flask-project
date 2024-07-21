@@ -229,9 +229,6 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
-.env.*.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -247,7 +244,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # VuePress build output
 .vuepress/dist
