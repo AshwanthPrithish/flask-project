@@ -20,6 +20,24 @@ from flask_project.auth_middleware import token_required
 with app.app_context():
   db.create_all()
 
+
+@app.route("/auth_status")
+def auth_status():
+    print(Librarian.query.all())
+    if current_user.is_authenticated:
+        student = Student.query.filter_by(id=current_user.id).first()
+        user_info = {
+            'isAuthenticated': 'True',
+            'role': current_user.role,
+            'username':   student.username,
+            'email': student.email
+
+        }
+    else:
+        user_info = {'is_authenticated': False, "role": ''}
+    
+    return jsonify(user_info)
+
 @app.route("/")
 @app.route("/home")
 def home():
@@ -28,23 +46,132 @@ def home():
 @app.route("/student-dash", methods=['GET', 'POST'])
 @login_required
 def student_dash():
-  if current_user.role == "student":
-       form = SearchSectionForm()
-       if form.validate_on_submit():
-          section = form.section.data
-          return redirect(url_for('search_results_section', query=section))
-       form1 = SearchTitleForm()
-       if form1.validate_on_submit():
-          title = form1.title.data
-          return redirect(url_for('search_results_title', query=title))
-       form2 = SearchAuthorForm()
-       if form2.validate_on_submit():
-          author = form2.author.data
-          return redirect(url_for('search_results_author', query=author))
-       return render_template("student_dashboard.html", title="Student Dashboard", form=form, form1=form1, form2=form2)
-  else:
-       flash("Access Denied! You do not have permission to view this page.", "danger")
-       return redirect(url_for("home"))
+   if current_user.role == "student":
+        return jsonify({
+            'username': current_user.username,
+            'role': current_user.role
+        })
+   else:
+        return jsonify({'error': 'Access Denied! You do not have permission to view this page.'}), 403
+
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+   auth = request.json
+
+   if auth and 'email' in auth and 'password' in auth and 'role' in auth:
+      email = auth['email']
+      password = auth['password']
+
+      student = Student.query.filter_by(email=email).first()
+      if(bcrypt.check_password_hash(student.password, password)):
+               token = jwt.encode({'email': email, 'role': 'student'}, app.config['SECRET_KEY'])
+               rem = True if auth['remember'] == 'true' else False
+               login_user(student, remember=rem)
+               return jsonify({'token': token, 'success': True,  'isAuthenticated': 'True', 'role': current_user.role, 'username': student.username, 'email': student.email}), 200
+   
+   return jsonify({'message': 'Invalid credentials','success': False}), 401
+
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({"message": "Successfully logged out"})
+
+
+@app.route("/register", methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    confirm_password = data.get('confirmPassword')
+
+    errors = {
+        'username': [],
+        'email': [],
+        'password': [],
+        'confirmPassword': []
+    }
+
+    if not username:
+        errors['username'].append('Username is required.')
+    if not email:
+        errors['email'].append('Email is required.')
+    if not password:
+        errors['password'].append('Password is required.')
+    if password != confirm_password:
+        errors['confirmPassword'].append('Passwords must match.')
+
+    if any(errors.values()):
+        return jsonify({'errors': errors}), 400
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    student = Student(username=username, email=email, password=hashed_password)
+    db.session.add(student)
+    db.session.commit()
+
+    return jsonify({'message': 'Your Student Account has been created!'}), 201
+
+
+@app.route("/sp-register", methods=['POST'])
+def sp_register():
+    print(123,request.headers)
+    print(request.json)
+    if current_user.is_authenticated:
+        if current_user.role == "librarian":
+            return jsonify({'redirect': url_for('sp_dash')}), 200
+        else:
+            return jsonify({'message': "Access Denied! You do not have permission to view this page."}), 403
+
+    data = request.get_json()
+    form = SPRegistrationForm(data=data)
+    
+    if form.validate():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        librarian = Librarian(username=form.username.data, email=form.email.data, admin_id=form.admin_id.data, password=hashed_password)
+        print('librarian', librarian)
+        with app.app_context():
+            db.session.add(librarian)
+            db.session.commit()
+
+        return jsonify({'message': f'Account Created for Admin {form.username.data}!'}), 201
+
+    errors = {field: form.errors.get(field, []) for field in form.errors}
+    print(errors)
+    return jsonify({'errors': errors}), 200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @app.route("/search-results-section/<query>")
 @login_required
@@ -133,66 +260,6 @@ def contact():
   return render_template("contact.html", title="Contact")
 
 
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-  if current_user.is_authenticated:
-    if current_user.role == "student":
-       return redirect(url_for('student_dash'))
-    else:
-       flash("Access Denied! You do not have permission to view this page.", "danger")
-       return redirect(url_for("home"))
-  form = RegistrationForm()
-  if form.validate_on_submit():
-    hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-    student = Student(username=form.username.data, email=form.email.data, password=hashed_password)
-    with app.app_context():
-      db.session.add(student)
-      db.session.commit()
-
-    flash(f'Your Student Account has been created!', 'success')
-    return redirect(url_for("login"))
-  return render_template("register.html", title="Register", form=form)
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-  form = LoginForm()
-  if current_user.is_authenticated:
-    if current_user.role == "student":
-       return redirect(url_for('student_dash'))
-    else:
-       flash("Access Denied! You do not have permission to view this page.", "danger")
-       return redirect(url_for("home"))
-  if form.validate_on_submit():
-    student = Student.query.filter_by(email=form.email.data).first()
-    if student and bcrypt.check_password_hash(student.password, form.password.data):
-      login_user(student, remember=form.remember.data)
-      return redirect(url_for('student_dash'))
-    else:
-      flash('Login unsuccessful, please check email, and password', 'danger')
-      
-  return render_template("login.html", title="Login", form=form)
-
-
-@app.route("/sp-register", methods=['GET', 'POST'])
-def sp_register():
-  if current_user.is_authenticated:
-    if current_user.role == "librarian":
-       return redirect(url_for('sp_dash'))
-    else:
-       flash("Access Denied! You do not have permission to view this page.", "danger")
-       return redirect(url_for("home"))
-  form = SPRegistrationForm()
-  if form.validate_on_submit():
-    hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-    librarian = Librarian(username=form.username.data, email=form.email.data, admin_id=form.admin_id.data, password=hashed_password)
-    with app.app_context():
-      db.session.add(librarian)
-      db.session.commit()
-
-    flash(f'Account Created for Admin {form.username.data}!', 'success')
-    return redirect(url_for("sp_login"))
-  return render_template("sp_register.html", title="Admin Register", form=form)
-
 @app.route("/sp-login", methods=['GET', 'POST'])
 def sp_login():
   form = SPLoginForm()
@@ -211,12 +278,6 @@ def sp_login():
     else:
       flash('Login unsuccessful, please check email, and password', 'danger')
   return render_template("sp_login.html", title="Admin Login", form=form)
-
-@app.route("/logout")
-@login_required
-def logout():
-  logout_user()
-  return redirect(url_for('home'))
 
 
 def save_picture(form_picture, role):
@@ -623,9 +684,11 @@ def book_feedback(book_id, student_id):
    
 @app.route("/feedbacks")
 def feedbacks():
-   feed_backs = FeedBack.query.all()
-   f = [[Book.query.filter_by(id=i.book_id).first().title, Student.query.filter_by(id=i.student_id).first().username, i.feedback] for i in feed_backs]
-   return render_template('view_feedbacks.html', f_list = f, title="Feedbacks")
+    feed_backs = FeedBack.query.all()
+    f = [{'book_title': Book.query.filter_by(id=i.book_id).first().title,
+          'student_username': Student.query.filter_by(id=i.student_id).first().username,
+          'feedback': i.feedback} for i in feed_backs]
+    return jsonify(f)
 
 
 @app.route("/download/<int:book_id>")   
@@ -885,3 +948,36 @@ def api_student_books(user_from_token):
    'genre_id' : book.genre_id} for book in books]
    return jsonify(books)
    
+
+
+@app.route("/api/search_section", methods=['POST'])
+@login_required
+def search_section_api():
+    data = request.json
+    section = data.get('section')
+    if section:
+        return jsonify({'success': True, 'query': section})
+    return jsonify({'success': False, 'message': 'Section is required'}), 400
+
+@app.route("/api/search_title", methods=['POST'])
+@login_required
+def search_title_api():
+    data = request.json
+    title = data.get('title')
+    if title:
+        return jsonify({'success': True, 'query': title})
+    return jsonify({'success': False, 'message': 'Title is required'}), 400
+
+@app.route("/api/search_author/<query>", methods=['POST'])
+@login_required
+def search_author_api(query):
+    print("inside correct endpoint", query)
+    books = Book.query.filter(func.lower(Book.author).ilike(f"%{query.lower()}%")).all()
+    books = [[{'title': book.title, 'author': book.author, 'lang': book.lang, 'content': book.content, 'rating': book.rating, 'release_year': book.release_year, 'id': book.id},
+              book.genre_id, Genre.query.filter_by(id=book.genre_id).first().name] for book in books]
+    if current_user.role == 'student':
+        for book in books:
+            if len(BookIssue.query.filter_by(student_id=current_user.id, book_id=book[0].get('id')).all()) <= 0:
+                del book[0]['content']
+    books.sort(key=lambda x: x[0].get('rating'), reverse=True)
+    return jsonify({'titles': books})
