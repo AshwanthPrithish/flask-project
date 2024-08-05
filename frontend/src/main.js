@@ -2,13 +2,11 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import store from './store';
-import axios from 'axios';
 
-import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import 'bootstrap'; // 
 
 Vue.config.productionTip = false;
-
-axios.defaults.headers.common['X-CSRF-Token'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
 store.dispatch('fetchAuthStatus').then(() => {
   new Vue({

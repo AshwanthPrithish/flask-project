@@ -51,7 +51,7 @@
               <router-link class="nav-link" to="/account">Account</router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/logout">Logout</router-link>
+              <a class="nav-link" href="#" @click.prevent="logout">Logout</a>
             </li>
           </template>
           <template v-else>
@@ -83,6 +83,9 @@ export default {
   },
   methods: {
     ...mapActions(['fetchAuthStatus']),
+    async logout() {
+    await this.$store.dispatch('logout');
+  },
   },
   created() {
     this.fetchAuthStatus();

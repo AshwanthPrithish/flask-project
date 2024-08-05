@@ -50,6 +50,15 @@ class Genre(db.Model):
 
     def __repr__(self):
         return f"Genre('{self.name}', {self.books})"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'date_created': self.date_created.isoformat(),  # Convert to ISO format for JSON
+            'description': self.description,
+            'librarian_id': self.librarian_id
+        }
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)

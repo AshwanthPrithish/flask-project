@@ -9,7 +9,6 @@ import SpGraphs from './components/SpGraphs.vue';
 import SpDash from './components/SpDash.vue';
 import NewSection from './components/NewSection.vue';
 import PendingRequests from './components/PendingRequests.vue';
-import LibSections from './components/LibSections.vue';
 import Account from './components/AccountPage.vue';
 import Login from './components/LoginPage.vue';
 import Register from './components/StudentRegister.vue';
@@ -19,7 +18,11 @@ import StudentGraphs from './components/StudentGraphs.vue';
 import StudentRequests from './components/StudentRequests.vue';
 import StudentIssued from './components/StudentIssued.vue';
 import SearchResultsAuthor from './components/SearchResultsAuthor.vue';
+import SearchResultsSection from './components/SearchResultsSection.vue';
 import store from './store';
+import SectionsPage from './components/SectionsPage.vue';
+import SectionPage from './components/SectionPage.vue';
+import UpdateSection from './components/UpdateSection.vue';
 
 
 Vue.use(Router);
@@ -31,39 +34,42 @@ const routes = [
   { path: '/contact', component: ContactPage },
   { path: '/student-dash', name: 'student-dash', meta:{requiresAuth:true},component: StudentDash },
   {
-    path: '/search-results-author/:query',
+    path: '/search-results-author/:data',
     name: 'SearchResultsAuthor',
     component: SearchResultsAuthor,
     props: true
+  },
+  {
+    path: '/search-results-section/:data',
+    name: 'SearchResultsSection',
+    component: SearchResultsSection,
+    props: true
+  },
+  {
+    path: '/section/:section_id', 
+    name: 'SectionPage',
+    component: SectionPage,
+    props: true, 
+  },
+  {
+    path: '/update-section/:section_id', 
+    name: 'UpdateSection',
+    component: UpdateSection,
+    props: true, 
   },
   { path: '/sp-graphs', component: SpGraphs },
   { path: '/sp-dash', component: SpDash },
   { path: '/new-section', component: NewSection },
   { path: '/pending-requests', component: PendingRequests },
-  { path: '/sections', component: LibSections },
+  { path: '/sections', component: SectionsPage },
   { path: '/account', component: Account },
   { path: '/login',name:'login',meta:{requiresGuest: true}, component: Login },
-  { path: '/register', component: Register },
-  { path: '/sp-login', component: SpLogin },
-  { path: '/sp-register', component: SpRegister },
+  { path: '/register', name:'register',meta:{requiresGuest: true},component: Register },
+  { path: '/sp-login', name:'sp-login',meta:{requiresGuest: true},component: SpLogin },
+  { path: '/sp-register', name:'sp-register',meta:{requiresGuest: true},component: SpRegister },
   { path: '/student-graphs', component: StudentGraphs },
   { path: '/student-requests', component: StudentRequests },
   { path: '/student-issued', component: StudentIssued },
-  {
-    path: '/logout',
-    name: 'logout',
-    component: {
-      template: '<div>Logging out...</div>',
-      created() {
-        this.logoutUser();
-      },
-      methods: {
-        async logoutUser() {
-          await this.$store.dispatch('logout');
-        }
-      }
-    }
-  },
 ];
 
 const router = new Router({
@@ -74,13 +80,13 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!store.state.isAuthenticated) {
-      next({ name: 'home' }); // Redirect to login if not authenticated
+      next({ name: 'home' }); 
     } else {
       next();
     }
   } else if (to.matched.some(record => record.meta.requiresGuest)) {
     if (store.state.isAuthenticated) {
-      next({ name: 'home' }); // Redirect to dashboard if already authenticated
+      next({ name: 'home' });
     } else {
       next();
     }

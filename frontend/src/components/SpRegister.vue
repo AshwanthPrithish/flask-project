@@ -93,6 +93,8 @@
   
   <script>
   import axios from 'axios';
+  import store from '@/store';
+  const csrfToken = store.state.csrf;
   
   export default {
     data() {
@@ -116,22 +118,15 @@
       async submitForm() {
         this.errors = { username: [], email: [], admin_id: [], password: [], confirm_password: [] };
         this.errorMessage = '';  // Clear previous error message
-  
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        console.log(csrfToken);
         try {
-            const response = await axios.post('http://localhost:5000/sp-register', {
+            await axios.post('http://localhost:5000/sp-register', {
             username: this.username,
             email: this.email,
-            admin_id: this.admin_d,
+            admin_id: this.admin_id,
             password: this.password,
-            confirm_password: this.confirm_password
-          }, {
-          headers: {
-            'X-CSRF-Token': csrfToken
-          }
-        });
-          console.log(response)
+            confirm_password: this.confirm_password,
+            csrf: csrfToken
+          });
           this.$router.push({ name: 'sp-login' }); // Redirect to login page
         } catch (error) {
           if (error.response && error.response.data.errors) {

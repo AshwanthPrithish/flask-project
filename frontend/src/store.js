@@ -7,9 +7,8 @@ import router from './router';
 Vue.use(Vuex);
 
 
-axios.defaults.withCredentials = true;  // Ensure credentials are included
 axios.defaults.baseURL = 'http://localhost:5000';  // Base URL for the backend
-
+axios.defaults.withCredentials = true;
 
 export default new Vuex.Store({
   state: {
@@ -17,10 +16,14 @@ export default new Vuex.Store({
     role: null,
     email: '',
     username:'',
-    token: null
+    token: null,
+    csrf: '',
+    id:''
   },
   mutations: {
     SET_AUTH(state, content) {
+     state.csrf = content.csrf;
+     axios.defaults.headers.common["X-CSRFToken"] = content.csrf;
       if(content.token){
         const decoded = jwtDecode(content.token);
         state.isAuthenticated = true;
@@ -30,7 +33,8 @@ export default new Vuex.Store({
         state.isAuthenticated = (content.isAuthenticated == 'True') ? true : false;
         state.role = content.role;
         state.username = content.username,
-        state.email=content.email
+        state.email=content.email,
+        state.id=content.id;
       }
     },
     LOGOUT(state){
@@ -48,12 +52,15 @@ export default new Vuex.Store({
         console.error('Error fetching auth status:', error);
       }
     },
-    async logout({ commit }) {
+    async logout({ commit,dispatch }) {
       try {
+        await dispatch('fetchAuthStatus');
         const response = await axios.post('/logout');
         if (response.data.message === "Successfully logged out") {
           commit('LOGOUT');
-          router.push({ name: 'home' });
+          if (router.currentRoute.name !== 'home') {
+            router.push({ name: 'home' });
+          }
         }
       } catch (error) {
         console.error('Error logging out:', error);

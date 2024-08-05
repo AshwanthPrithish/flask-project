@@ -78,8 +78,8 @@
   </template>
   
   <script>
+  import { mapState } from 'vuex';
   import axios from 'axios';
-  
   export default {
     data() {
       return {
@@ -96,17 +96,20 @@
         errorMessage: ''  // For general error messages
       };
     },
+    computed: {
+    ...mapState(['csrf'])
+  },
     methods: {
       async submitForm() {
         this.errors = { username: [], email: [], password: [], confirmPassword: [] };
         this.errorMessage = '';  // Clear previous error message
-        
         try {
           await axios.post('http://localhost:5000/register', {
             username: this.username,
             email: this.email,
             password: this.password,
-            confirmPassword: this.confirmPassword
+            confirm_password: this.confirmPassword,
+            csrf_token: this.csrf
           });
           this.$router.push({ name: 'login' }); // Redirect to login page
         } catch (error) {

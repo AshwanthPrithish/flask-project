@@ -60,6 +60,7 @@
   
   <script>
   import axios from 'axios';
+  import { mapState } from 'vuex';
   
   export default {
     data() {
@@ -73,19 +74,23 @@
         generalError: null,
       };
     },
+    computed: {
+    ...mapState(['csrf'])
+  },
     methods: {
       async login() {
         this.emailError = null;
         this.passwordError = null;
         this.generalError = null;
-  
         try {
           const response = await axios.post('http://localhost:5000/login', {
+            
             email: this.email,
             password: this.password,
             role: this.role,
-            remember: `${this.remember}`
-          }, { withCredentials: true });
+            remember: `${this.remember}`,
+            
+          },);
           
     if (response.data.success && response.data.token) {
       this.$store.commit('SET_AUTH', response.data);

@@ -79,6 +79,7 @@
   <script>
   import axios from 'axios';
   import { mapState } from 'vuex';
+  import { mapActions } from 'vuex';
   
   export default {
     data() {
@@ -94,15 +95,23 @@
     computed: {
       ...mapState(['username'])
     },
+    created() {
+    this.fetchAuthStatus();
+  },
     methods: {
+      ...mapActions(['fetchAuthStatus']),
       async submitSectionForm() {
         this.sectionError = null;
   
         try {
-          await axios.post('http://localhost:5000/api/search_section', {
+          const response = await axios.post('http://localhost:5000/search-results-section', {
             section: this.section
           });
-          this.$router.push({ name: 'SearchResultsSection', query: { query: this.section } });
+          if(response.data.success){
+          this.$router.push({ name: 'SearchResultsSection', params: { 
+      data: JSON.stringify({ section: this.section, sections: response.data.sections }) 
+    }  });
+          }
         } catch (error) {
           this.sectionError = error.response.data.message;
         }
@@ -121,12 +130,14 @@
       },
       async submitAuthorForm() {
         this.authorError = null;
-  
         try {
-          await axios.post('http://localhost:5000/api/search_author', {
+
+          const response = await axios.post('http://localhost:5000/search-results-author', {
             author: this.author
           });
-          this.$router.push({ name: 'SearchResultsAuthor', query: { query: this.author } });
+          this.$router.push({ name: 'SearchResultsAuthor', params: { 
+      data: JSON.stringify({ author: this.author, books: response.data.books }) 
+    }  });
         } catch (error) {
           this.authorError = error.response.data.message;
         }
