@@ -16,7 +16,6 @@ from flask_project.forms import AdminLoginForm, RegistrationForm, LoginForm, Rem
 from flask_project.models import Admin, Customer, Service_Professional, Service, Service_Request, Remarks, WaitingList
 from flask_login import login_user, current_user, logout_user, login_required
 from sqlalchemy import func, not_
-from flask_project.auth_middleware import token_required
 from flask_mail import Message
 from flask_project.redis_client import redis_client
 from flask_project.tasks import export_as_csv, send_waiting_confirm_mail
