@@ -44,6 +44,9 @@
                 <router-link class="nav-link" to="/pending-requests">Pending Requests</router-link>
               </li>
               <li class="nav-item">
+                <router-link class="nav-link" to="/active-services">Active Requests</router-link>
+              </li>
+              <li class="nav-item">
                 <router-link class="nav-link" to="/past-services">View Past Services</router-link>
               </li>
               <li class="nav-item">

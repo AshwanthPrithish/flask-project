@@ -21,6 +21,7 @@ from flask_mail import Message
 from flask_project.redis_client import redis_client
 from flask_project.tasks import export_as_csv, send_waiting_confirm_mail
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+from werkzeug.utils import secure_filename
 
 def cache_data(key, data, timeout=300):
     """Store data in Redis with a timeout."""
@@ -411,11 +412,6 @@ def customer_dash():
         return jsonify(username=current_user.username) 
     else:
         return jsonify(error="Access Denied!"), 403
-   
-
-import os
-from flask import jsonify, request, current_app
-from werkzeug.utils import secure_filename
 
 @app.route("/sp-register", methods=['POST'])
 def sp_register():
@@ -1071,6 +1067,50 @@ def reject_request(request_id, service_professional_id):
    redis_client.delete("view_service_requests_key")
    flash(f"Rejected Service", "success")
    return jsonify({"message": "Rejected Service Request!"}), 200
+
+
+@app.route('/active-services')
+@login_required
+def active_services():
+    if current_user.role != 'service_professional':
+        return jsonify({"message": "Access Denied! You do not have permission to view this page."}), 403
+
+    cache_key = f"active_services_{current_user.id}"
+
+    cached_data = get_cached_data(cache_key)
+
+    if cached_data is not None:
+        active_services = [
+            {
+               **sr,
+               'date_of_request': datetime.fromisoformat(sr['date_of_request']),
+               'date_of_completion': datetime.fromisoformat(sr['date_of_completion'])
+            }
+            for sr in cached_data
+         ]
+    else:
+        active_services = Service_Request.query.filter_by(service_professional_id=current_user.id, service_status="assigned").all()
+        active_services_serialized = [
+               {
+                  **sr.get_as_dict(),
+                  'date_of_request': sr.date_of_request.isoformat() if isinstance(sr.date_of_request, datetime) else sr.date_of_request,
+                  'date_of_completion': sr.date_of_completion.isoformat() if isinstance(sr.date_of_completion, datetime) else sr.date_of_completion,
+                  'service_name': sr.service.name if sr.service.name else '',
+                  'customer_name': sr.customer.username if sr.customer else '',
+               }
+               for sr in active_services
+            ]
+
+        cache_data(cache_key, active_services_serialized, timeout=300)
+        active_services =  [
+                    {
+                        **sr,
+                        'date_of_request': datetime.fromisoformat(sr['date_of_request']),
+                        'date_of_completion': datetime.fromisoformat(sr['date_of_completion'])
+                    }
+                for sr in get_cached_data(cache_key) # type: ignore
+            ]
+    return jsonify(active_services), 200
 
 
 @app.route('/past-services')

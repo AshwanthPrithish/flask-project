@@ -34,6 +34,7 @@ import ViewServiceRequests from './components/ViewServiceRequests.vue';
 import store from './store';
 import AddServiceRequest from './components/AddServiceRequest.vue';
 import WaitingServiceProfessionals from './components/WaitingServiceProfessionals.vue';
+import ActiveRequests from './components/ActiveRequests.vue';
 
 Vue.use(Router);
 
@@ -54,6 +55,7 @@ const routes = [
     { path: '/sp-account',name: 'sp-account', component: ServiceProfessionalAccount,meta: { requiresServiceProfessionalAuth: true } },
     { path: '/sp-dash',name: 'sp-dash', component: SpDash,meta: { requiresServiceProfessionalAuth: true } },
     { path: '/sp-graph', meta: { requiresServiceProfessionalAuth: true }, component: SPGraphView  },
+    { path: '/active-services', component: ActiveRequests,meta: { requiresServiceProfessionalAuth: true } },
     { path: '/pending-requests', component: PendingRequests,meta: { requiresServiceProfessionalAuth: true } },
     { path: '/register', name: 'register', meta: { requiresGuest: true }, component: Register },
     { path: '/remarks', component: ViewRemarks },
