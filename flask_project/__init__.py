@@ -21,7 +21,7 @@ session_manager = Session()
 
 app = Flask(__name__)
 
-with open('../config.properties', 'r') as f:
+with open('../../config.properties', 'r') as f:
     properties_content = '[DEFAULT]\n' + f.read()
     
 config = configparser.ConfigParser()
