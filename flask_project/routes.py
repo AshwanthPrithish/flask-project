@@ -869,10 +869,14 @@ def mark_request_as_complete(request_id):
 
    if request.service_status != "assigned": # type: ignore
         return jsonify({"error": "Service request is not yet assigned. Please wait to get it assigned first."}), 403
-      
+    
+   sr = request.service_professional
+   active_key = f"active_services_{sr.id}"
+
    request.service_status = "completed" # type: ignore
    cache_key = f"past_services_{current_user.role}_{current_user.id}"
    redis_client.delete(cache_key)
+   redis_client.delete(active_key)
    db.session.commit()
    cache_key = f"customer_requests_{current_user.id}"
    redis_client.delete(cache_key)
