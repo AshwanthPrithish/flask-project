@@ -111,6 +111,21 @@
               <span v-for="error in errors.confirm_password" :key="error">{{ error }}</span>
             </div>
           </div>
+
+          <div class="form-group">
+          <label for="proofFile" class="form-control-label">Proof Document (PDF)</label>
+          <input
+            type="file"
+            @change="handleFileUpload"
+            class="form-control form-control-lg"
+            :class="{ 'is-invalid': errors.proofFile && errors.proofFile.length }"
+            id="proofFile"
+            accept="application/pdf"
+          />
+          <div v-if="errors.proofFile && errors.proofFile.length" class="invalid-feedback">
+            <span v-for="error in errors.proofFile" :key="error">{{ error }}</span>
+          </div>
+        </div>
   
           <div class="form-group">
             <button type="submit" class="btn btn-outline-info">Register</button>
@@ -137,6 +152,7 @@
         experience: '',
         confirmPassword: '',
         selectedService: '',
+        proofFile: null,
         services: [],
         errors: {
           username: [],
@@ -146,6 +162,7 @@
           password: [],
           confirm_password: [],
           services: [],
+          proofFile: []
         },
         errorMessage: '' 
       };
@@ -158,19 +175,32 @@
           const response = await axios.get('http://localhost:5001/fetch-services');
           this.services = response.data;
         },
+        handleFileUpload(event) {
+         this.proofFile = event.target.files[0];
+        },
       async submitForm() {
-        this.errors = { username: [], email: [], password: [], confirmPassword: [],address: [], contact: []};
-        this.errorMessage = ''; 
+        this.errors = { username: [], email: [], password: [], confirmPassword: [], proofFile: [] };
+        this.errorMessage = '';
+
+        const formData = new FormData();
+        formData.append('username', this.username);
+        formData.append('email', this.email);
+        formData.append('password', this.password);
+        formData.append('description', this.description);
+        formData.append('experience', this.experience);
+        formData.append('service', this.selectedService);
+        formData.append('confirm_password', this.confirmPassword);
+        formData.append('csrf_token', this.csrf);
+
+        if (this.proofFile) {
+          formData.append('proofFile', this.proofFile);
+        }
+
         try {
-          await axios.post('http://localhost:5001/sp-register', {
-            username: this.username,
-            email: this.email,
-            password: this.password,
-            description: this.description,
-            experience: this.experience,
-            service: this.selectedService+'',
-            confirm_password: this.confirmPassword,
-            csrf_token: this.csrf
+          await axios.post('http://localhost:5001/sp-register', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
           });
           this.$router.push({ name: 'sp-login' });
         } catch (error) {
@@ -181,7 +211,7 @@
             this.errorMessage = error.response.data.message;
           }
         }
-      }
+      },
     },
     mounted() {
         this.fetchServices();

@@ -6,6 +6,7 @@
             <div v-for="(data, index) in service_professionals" :key="index" class="container">
                 <b>Professional Name:</b> {{ data.username }}<br />
                 <b>Email:</b> {{ data.email }}<br />
+                <b>Service Name:</b> {{ data.service_name }}<br />
                 <b>Description:</b> {{ data.description }}<br />
                 <b>Experience:</b> {{ data.experience }}<br />
                 <b>Date Created:</b> {{ data.date_created }}<br />

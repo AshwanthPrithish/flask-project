@@ -33,6 +33,7 @@ import ViewServiceProfessionals from './components/ViewServiceProfessionals.vue'
 import ViewServiceRequests from './components/ViewServiceRequests.vue';
 import store from './store';
 import AddServiceRequest from './components/AddServiceRequest.vue';
+import WaitingServiceProfessionals from './components/WaitingServiceProfessionals.vue';
 
 Vue.use(Router);
 
@@ -91,6 +92,7 @@ const routes = [
     { path: '/new-service', component: AddService, meta:{ requiresAdminAuth: true } },
     { path: '/view-customers', component: ViewCustomers, meta:{ requiresAdminAuth: true } },
     { path: '/view-remarks', component: ViewRemarks, meta:{ requiresAdminAuth: true } },
+    { path: '/waiting-list', component: WaitingServiceProfessionals,meta: { requiresAdminAuth: true } },
     { path: '/view-service-professionals', component: ViewServiceProfessionals, meta:{ requiresAdminAuth: true } },
     { path: '/view-service-requests', component: ViewServiceRequests, meta:{ requiresAdminAuth: true } },
   ];

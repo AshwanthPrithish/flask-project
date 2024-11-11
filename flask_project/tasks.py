@@ -52,6 +52,15 @@ def export_as_csv(professional_id):
             file.write(csv_content)
     return file_path
 
+@celery.task
+def send_waiting_confirm_mail(status, email):
+    logger.info("Sending email for waiting list professionals...")
+    with capp.app_context():
+        msg = Message('Registration status', recipients=[email])
+        msg.body = f"Your Service Professional registration has been {status}"
+        mail.send(msg)
+    return "Mail Sent"
+
 @celery.on_after_configure.connect # type: ignore
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=9, minute=0), send_daily_reminders.s()) # type: ignore

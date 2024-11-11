@@ -68,6 +68,27 @@ class Service(db.Model):
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
+class WaitingList(db.Model):
+    __tablename__ = 'waiting_list'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    description = db.Column(db.String(400), nullable=False)
+    experience = db.Column(db.String(400), nullable=False)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    password = db.Column(db.String(60), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    role = "waiting_service_professional"
+
+    def __repr__(self):
+        return f"WaitingList('{self.username}', '{self.email}')"
+    
+    def get_as_dict(self):
+        mapper = class_mapper(self.__class__)
+        """Convert the Customer instance to a dictionary."""
+        return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
+
+
 
 class Service_Professional(db.Model, UserMixin):
     __tablename__ = 'service_professional'

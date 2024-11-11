@@ -64,6 +64,9 @@
                 <router-link class="nav-link" to="/view-service-professionals">View All Service Professionals</router-link>
               </li>
               <li class="nav-item">
+                <router-link class="nav-link" to="/waiting-list">View Pending Professional Requests</router-link>
+              </li>
+              <li class="nav-item">
                 <router-link class="nav-link" to="/view-service-requests">View All Service Requests</router-link>
               </li>
               <li class="nav-item">

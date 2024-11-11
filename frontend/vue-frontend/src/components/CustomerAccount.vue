@@ -157,6 +157,7 @@ export default {
       try {
         const response = await axios.post('customer-account', formData);
         this.successMessage = response.data.message;
+        this.$router.go(0);
       } catch (error) {
         this.errors = error.response.data.errors || {};
         if (error.response.data.message) {

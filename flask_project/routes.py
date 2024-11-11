@@ -13,13 +13,13 @@ from PIL import Image
 from flask import render_template,flash, redirect, session, url_for, request, jsonify,send_from_directory, current_app
 from flask_project import db, bcrypt, mail, app, celery
 from flask_project.forms import AdminLoginForm, RegistrationForm, LoginForm, RemarkForm, SPLoginForm, SPRegistrationForm, SearchServiceForm, SearchServiceProfessionalForm, ServiceForm, ServiceRequestForm, UpdateCustomerAccount, UpdateSPAccount, UpdateServiceForm
-from flask_project.models import Admin, Customer, Service_Professional, Service, Service_Request, Remarks
+from flask_project.models import Admin, Customer, Service_Professional, Service, Service_Request, Remarks, WaitingList
 from flask_login import login_user, current_user, logout_user, login_required
 from sqlalchemy import func, not_
 from flask_project.auth_middleware import token_required
 from flask_mail import Message
 from flask_project.redis_client import redis_client
-from flask_project.tasks import export_as_csv
+from flask_project.tasks import export_as_csv, send_waiting_confirm_mail
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 def cache_data(key, data, timeout=300):
@@ -188,12 +188,12 @@ def view_service_professionals():
       cached_sps = get_cached_data(cache_key)
       if cached_sps:
             service_professionals = [
-               {**sp, 'date_created': datetime.fromisoformat(sp['date_created'])}
+               {**sp, 'date_created': datetime.fromisoformat(sp['date_created']), 'service_name':  Service.query.get_or_404(sp.service_id).name}
                for sp in cached_sps
             ]
       else:
             service_professionals = Service_Professional.query.filter(not_(Service_Professional.username.ilike('%dummy%'))).all()
-            service_professionals_serialized = [ {**sp.get_as_dict(), 'date_created': sp.date_created.isoformat()}  for sp in service_professionals]
+            service_professionals_serialized = [ {**sp.get_as_dict(), 'date_created': sp.date_created.isoformat(),'service_name': Service.query.get_or_404(sp.service_id).name}  for sp in service_professionals]
             cache_data(cache_key, service_professionals_serialized)  
             cached_sps =  get_cached_data(cache_key)
       return jsonify(cached_sps), 200
@@ -246,6 +246,71 @@ def view_service_requests():
    
    else:
        return jsonify(error="Access Denied!"), 403
+   
+@app.route("/pending-professional-requests")
+@login_required
+def view_pending_sp_requests():
+   if current_user.role == "admin":
+      cache_key = "view_pending_professional_requests_key"
+      cached_waiting = get_cached_data(cache_key)
+      if cached_waiting:
+            waiting = [{**i,'date_created': datetime.fromisoformat(i['date_created'])} for i in cached_waiting]
+      else:
+            waiting = WaitingList.query.all()
+            waiting_serialized = [{**w.get_as_dict(),'date_created': w.date_created.isoformat(), "service_name": Service.query.get_or_404(w.service_id).name} for w in waiting]
+            cache_data(cache_key, waiting_serialized)  
+            cached_waiting =  get_cached_data(cache_key)
+      return jsonify({'waiting_list':cached_waiting}), 200
+   
+   else:
+      return jsonify(error="Access Denied!"), 403
+   
+
+@app.route("/admin/approve/<int:waiting_id>", methods=['POST'])
+@login_required
+def approve_service_professional(waiting_id):
+    if not current_user.is_authenticated or current_user.role != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    waiting_entry = WaitingList.query.get_or_404(waiting_id)
+    email = waiting_entry.email
+    send_waiting_confirm_mail.apply_async(args=["Approved",email]) # type: ignore
+    approved_sp = Service_Professional(
+        username=waiting_entry.username, # type: ignore
+        email=waiting_entry.email, # type: ignore
+        password=waiting_entry.password, # type: ignore
+        description=waiting_entry.description, # type: ignore
+        experience=waiting_entry.experience, # type: ignore
+        service_id=waiting_entry.service_id # type: ignore
+    )
+    try:
+        db.session.add(approved_sp)
+        db.session.delete(waiting_entry)
+        redis_client.delete("view_pending_professional_requests_key")
+        db.session.commit()
+        return jsonify({'message': f'Service Professional {approved_sp.username} approved!'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500
+
+@app.route("/admin/reject/<int:waiting_id>", methods=['POST'])
+@login_required
+def reject_service_professional(waiting_id):
+    if not current_user.is_authenticated or current_user.role != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    waiting_entry = WaitingList.query.get_or_404(waiting_id)
+    email = waiting_entry.email
+    send_waiting_confirm_mail.apply_async(args=["Rejected",email]) # type: ignore
+    try:
+        db.session.delete(waiting_entry)
+        redis_client.delete("view_pending_professional_requests_key")
+        db.session.commit()
+        return jsonify({'message': f'Service Professional {waiting_entry.username} rejected!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500
+
 
 @app.route("/register", methods=['POST'])
 def register():
@@ -348,21 +413,29 @@ def customer_dash():
         return jsonify(error="Access Denied!"), 403
    
 
+import os
+from flask import jsonify, request, current_app
+from werkzeug.utils import secure_filename
+
 @app.route("/sp-register", methods=['POST'])
 def sp_register():
     if current_user.is_authenticated:
-        if current_user.role == "service_professional":
-             return jsonify({"error": "Unauthorized"}), 403
-        else:
-            return jsonify({'message': "Access Denied! You do not have permission to view this page."}), 403
+        return jsonify({"error": "Unauthorized"}), 403
 
-    data = request.get_json()
+    data = request.form
     form = SPRegistrationForm(data=data)
+
+    proof_file = request.files.get('proofFile')
+    if proof_file and proof_file.mimetype != 'application/pdf':
+        return jsonify({"message": "Only PDF files are allowed for proof documents."}), 400
 
     if form.validate_on_submit():
         existing_user = Service_Professional.query.filter(
             (Service_Professional.username == form.username.data) |
             (Service_Professional.email == form.email.data)
+        ).first() or WaitingList.query.filter(
+            (WaitingList.username == form.username.data) |
+            (WaitingList.email == form.email.data)
         ).first()
 
         if existing_user:
@@ -370,24 +443,27 @@ def sp_register():
                 return jsonify({'message': 'Username already exists.'}), 400
             if existing_user.email == form.email.data:
                 return jsonify({'message': 'Email already exists.'}), 400
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        service = Service.query.filter_by(id=int(form.service.data)).first()
-        if not service:
-            return jsonify({'message': 'Selected service is invalid.'}), 400
 
-        service_professional = Service_Professional(
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        waiting_entry = WaitingList(
             username=form.username.data, # type: ignore
             email=form.email.data, # type: ignore
             password=hashed_password, # type: ignore
             description=form.description.data, # type: ignore
             experience=form.experience.data, # type: ignore
-            service_id=service.id# type: ignore
+            service_id=int(form.service.data) # type: ignore
         )
 
+        if proof_file:
+            filename = secure_filename(f"{form.email.data}.pdf").replace('.com','')
+            proof_path = os.path.join(current_app.root_path, 'static/proofs', filename)
+            os.makedirs(os.path.dirname(proof_path), exist_ok=True)
+            proof_file.save(proof_path)
+
         try:
-            db.session.add(service_professional)
+            db.session.add(waiting_entry)
             db.session.commit()
-            return jsonify({'message': f'Account created for Service Professional {form.username.data}!'}), 201
+            return jsonify({'message': 'Your registration is pending admin approval.'}), 201
         except Exception as e:
             db.session.rollback()
             return jsonify({'message': str(e)}), 500
@@ -541,7 +617,8 @@ def customer_account():
             db.session.commit()
             redis_client.delete("view_customers_key")
             return jsonify({"message": "Account updated successfully"}), 200
-        except Exception:
+        except Exception as e:
+            print(e)
             db.session.rollback()  
             return jsonify({"message": "Integrity Error: Email or username might already be in use."}), 400
     return jsonify({"message": "Bad Request"}), 400
@@ -781,6 +858,7 @@ def request_service(service_id):
 
     redis_client.delete(f"customer_requests_{current_user.id}")
     redis_client.delete("view_service_requests_key")
+    redis_client.delete("pending_requests")
     cache_data(cache_key_requests_count, requests_count + 1, timeout=300)
     cache_data(cache_key_service_request, True, timeout=300)
 
