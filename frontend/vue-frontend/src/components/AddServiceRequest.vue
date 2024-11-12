@@ -19,6 +19,7 @@
             id="date_of_request"
             v-model="form.date_of_request"
             :class="['form-control', 'form-control-lg', errors.date_of_request ? 'is-invalid' : '']"
+            :min="todayDate"
           />
           <div v-if="errors.date_of_request" class="invalid-feedback">
             <span>{{ errors.date_of_request }}</span>
@@ -51,6 +52,7 @@ export default {
   props: ['service_id'],
   data() {
     return {
+      todayDate: new Date().toISOString().split('T')[0],
       form: {
         date_of_request: '',
         request_duration: ''

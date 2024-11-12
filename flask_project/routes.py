@@ -188,12 +188,12 @@ def view_service_professionals():
       cached_sps = get_cached_data(cache_key)
       if cached_sps:
             service_professionals = [
-               {**sp, 'date_created': datetime.fromisoformat(sp['date_created']), 'service_name':  Service.query.get_or_404(sp.service_id).name}
+               {**sp, 'date_created': datetime.fromisoformat(sp['date_created']), 'service_name':  Service.query.get_or_404(sp['service_id']).name}
                for sp in cached_sps
             ]
       else:
             service_professionals = Service_Professional.query.filter(not_(Service_Professional.username.ilike('%dummy%'))).all()
-            service_professionals_serialized = [ {**sp.get_as_dict(), 'date_created': sp.date_created.isoformat(),'service_name': Service.query.get_or_404(sp.service_id).name}  for sp in service_professionals]
+            service_professionals_serialized = [ {**sp.get_as_dict(), 'date_created': sp.date_created.isoformat(),'service_name': Service.query.get_or_404(sp.get_as_dict()['service_id']).name}  for sp in service_professionals]
             cache_data(cache_key, service_professionals_serialized)  
             cached_sps =  get_cached_data(cache_key)
       return jsonify(cached_sps), 200
@@ -286,6 +286,8 @@ def approve_service_professional(waiting_id):
     try:
         db.session.add(approved_sp)
         db.session.delete(waiting_entry)
+        redis_client.delete("view_service_professionals_key")
+        redis_client.delete(f"service:{approved_sp.id}")
         redis_client.delete("view_pending_professional_requests_key")
         db.session.commit()
         return jsonify({'message': f'Service Professional {approved_sp.username} approved!'}), 201
@@ -713,6 +715,7 @@ def update_service(service_id):
             service.price = form.price.data # type: ignore
             db.session.commit()
             redis_client.delete("services_key")
+            redis_client.delete(f"service:{service_id}")
             return jsonify({"message": "Service updated!"}), 200
         except Exception:
             db.session.rollback()
@@ -1045,6 +1048,7 @@ def accept_request(request_id, service_professional_id):
 
    cache_key = "pending_requests"
    redis_client.delete(cache_key)
+   redis_client.delete(f"active_services_{current_user.id}")
    redis_client.delete("view_service_requests_key")
 
    return jsonify({"message": "Accepted Service Request!"}), 200
@@ -1331,7 +1335,7 @@ def admin_graphs():
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
    plt.axis('equal')
-   plt.title('Distribution of Service Professional Names involved')
+   plt.title('Distribution of Service Professional Names with requests involved')
    picture_path = os.path.join(app.root_path, f'static/graphs/three.png')
    plt.savefig(picture_path)
    plt.close()
