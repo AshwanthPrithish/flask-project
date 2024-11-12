@@ -287,7 +287,7 @@ def approve_service_professional(waiting_id):
         db.session.add(approved_sp)
         db.session.delete(waiting_entry)
         redis_client.delete("view_service_professionals_key")
-        redis_client.delete(f"service:{approved_sp.id}")
+        redis_client.delete(f"service:{approved_sp.service_id}")
         redis_client.delete("view_pending_professional_requests_key")
         db.session.commit()
         return jsonify({'message': f'Service Professional {approved_sp.username} approved!'}), 201
