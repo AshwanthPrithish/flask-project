@@ -19,7 +19,7 @@ def send_daily_reminders():
     with capp.app_context():
         pending_requests = Service_Request.query.filter_by(service_status="requested").all()
         for request in pending_requests:
-            for professional in Service_Professional.query.filter_by(service_id=request.service_id).all():
+            for professional in Service_Professional.query.filter(Service_Professional.service_id == request.service_id,Service_Professional.username.like('%dummy%') == False).all():
                 if professional:
                     msg = Message('Pending Service Request', recipients=[professional.email])
                     msg.body = f"Reminder: There is an unassigned pending service request for {request.service.name}. Please take action."

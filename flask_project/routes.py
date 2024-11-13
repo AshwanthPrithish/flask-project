@@ -992,7 +992,7 @@ def pending_requests():
     if cached_data is not None:
         details = cached_data  
     else:
-        requests = Service_Request.query.filter_by(service_status="requested").all()
+        requests = Service_Request.query.filter_by(service_status="requested",service_id=current_user.service_id).all()
         details = []
 
         for service_request in requests:
