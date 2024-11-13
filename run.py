@@ -8,14 +8,14 @@ def db_setup_rbac():
     with app.app_context():
         admin_list = Admin.query.all()
         if not admin_list:
-            # Create an admin user
+            
             hashed_password = bcrypt.generate_password_hash('admin').decode('utf-8')
             admin_user = Admin(id=-1, username='admin', email='admin@test.com', password=hashed_password) 
             db.session.add(admin_user)
             db.session.commit()
 
     with app.app_context():
-        # Check for existing customers and create a dummy customer if none exist
+        
         customer_list = Customer.query.all()
         if not customer_list:
             dummy_customer = Customer(
@@ -29,34 +29,34 @@ def db_setup_rbac():
             db.session.add(dummy_customer)
             db.session.commit()
 
-        # Check for existing services and create dummy household services if none exist
+        
         service_list = Service.query.all()
         if not service_list:
-            # Create three dummy services
+            
             services = [
                 Service(name='Cleaning', price='50', description='cleaning service'), 
                  Service(name='Washing', price='50', description='washing service'), 
             ]
-            db.session.bulk_save_objects(services)  # Bulk add services
+            db.session.bulk_save_objects(services) 
             db.session.commit()
 
-        # Now check for existing service professionals and create a dummy if none exist
+        
         service_professional_list = Service_Professional.query.all()
         if not service_professional_list:
-            # Get the IDs of the services to associate with the service professional
+            
             service_ids = [Service.query.first_or_404().id]
 
-            # Create a dummy service professional for each service
+            
             x = 0
             for service_id in service_ids:
                 dummy_service_professional = Service_Professional(
-                    id=10001,  # Ensure unique IDs 
+                    id=10001, 
                     username=f'dummy_professional_{x}', 
                     password='dummy_password', 
                     email=f'dummy_professional_{x}@gmail.com', 
                     description='Experienced household service provider', 
                     experience="5 years", 
-                    service_id=service_id  # Associate with the service 
+                    service_id=service_id 
                 )
                 x += 1
                 db.session.add(dummy_service_professional)

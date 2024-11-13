@@ -12,7 +12,6 @@ import configparser
 from celery import Celery
 import logging 
 
-# Initialize extensions
 db = SQLAlchemy()
 mail = Mail()
 bcrypt = Bcrypt()
@@ -51,8 +50,8 @@ app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/1'
 app.config['CELERY_BROKER_TRANSPORT_OPTIONS'] = {'visibility_timeout': 3600}
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
-celery.conf.result_backend = 'redis://localhost:6379/2' # type: ignore
-celery.conf.timezone = 'Asia/Kolkata' # type: ignore
+celery.conf.result_backend = 'redis://localhost:6379/2'
+celery.conf.timezone = 'Asia/Kolkata' 
 celery.conf.enable_utc = False
 
 csrf = CSRFProtect(app)

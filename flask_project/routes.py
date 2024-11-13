@@ -23,11 +23,9 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.utils import secure_filename
 
 def cache_data(key, data, timeout=300):
-    """Store data in Redis with a timeout."""
     redis_client.setex(key, timeout, json.dumps(data))
 
 def get_cached_data(key):
-    """Retrieve cached data from Redis."""
     cached_data = redis_client.get(key)
     if cached_data:
         return json.loads(cached_data) 
@@ -232,7 +230,7 @@ def view_service_requests():
                for sr in service_requests
             ]
 
-            cache_data(cache_key, service_requests_serialized)  # Cache the serialized
+            cache_data(cache_key, service_requests_serialized) 
             service_requests =  [
                     {
                         **sr,
@@ -326,7 +324,6 @@ def register():
     form = RegistrationForm(data=data)
     
     if form.validate_on_submit():
-        # Check for uniqueness
         existing_user = Customer.query.filter(
             (Customer.username == form.username.data) |
             (Customer.email == form.email.data) |
@@ -491,7 +488,6 @@ def sp_login():
                 token = jwt.encode({'email': form.email.data, 'role': 'service_professional'}, app.config['SECRET_KEY'])
                 login_user(service_professional, remember=data['remember'])
 
-                # Cache session details
                 session.permanent = True
                 session['user_id'] = service_professional.id
                 session['role'] = 'service_professional'
@@ -768,7 +764,7 @@ def service(service_id):
             for professional in offered_by_professionals if "dummy" not in professional.username
         ]
 
-        cache_data(cache_key, {'service': service.get_as_dict(), 'offered_by_professionals': offered_by_professionals}, timeout=300)  # Cache for 5 minutes
+        cache_data(cache_key, {'service': service.get_as_dict(), 'offered_by_professionals': offered_by_professionals}, timeout=300) 
         cached_data = get_cached_data(cache_key)
         return jsonify(cached_data), 200
  
@@ -1204,7 +1200,6 @@ def customer_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1222,7 +1217,6 @@ def customer_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1250,7 +1244,7 @@ def sp_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
+   
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1268,7 +1262,7 @@ def sp_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
+   
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1296,7 +1290,7 @@ def admin_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
+   
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1314,7 +1308,7 @@ def admin_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
+   
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
@@ -1332,7 +1326,6 @@ def admin_graphs():
    for value in service_requests:
       value_counts[value] = value_counts.get(value, 0) + 1
 
-   # Pie chart
    plt.figure(figsize=(8, 8))
    plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')

@@ -23,7 +23,6 @@ class Admin(db.Model, UserMixin):
 
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -45,7 +44,6 @@ class Customer(db.Model, UserMixin):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -64,7 +62,6 @@ class Service(db.Model):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -85,7 +82,6 @@ class WaitingList(db.Model):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -110,7 +106,6 @@ class Service_Professional(db.Model, UserMixin):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -124,7 +119,7 @@ class Service_Request(db.Model):
 
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
     service_professional_id = db.Column(db.Integer, db.ForeignKey('service_professional.id'), nullable=True)
-    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)  # Foreign key for Service
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False) 
 
     customer = db.relationship('Customer', back_populates='service_requests',lazy='joined')
     service_professional = db.relationship('Service_Professional', back_populates='service_requests',lazy='joined')
@@ -135,7 +130,6 @@ class Service_Request(db.Model):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
 
@@ -151,6 +145,5 @@ class Remarks(db.Model):
     
     def get_as_dict(self):
         mapper = class_mapper(self.__class__)
-        """Convert the Customer instance to a dictionary."""
         return {column.name: getattr(self, column.name) for column in mapper.columns if not column.name == "password"}
 
