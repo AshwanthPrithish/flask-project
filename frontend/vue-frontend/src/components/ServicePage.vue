@@ -32,7 +32,6 @@
         </div>
       </div>
   
-      <!-- Using the custom Modal component -->
       <modal :isVisible="showDeleteModal" @close="showDeleteModal = false">
         <template v-slot:header>
           <h5>Delete Service?</h5>

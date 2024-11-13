@@ -20,7 +20,6 @@
         <b>Date of Request:</b> {{ request.date_of_request }}<br />
         <b>Date of Completion:</b> {{ request.date_of_completion }}<br />
   
-        <!-- Accept Modal -->
         <Modal :isVisible="showAcceptModal && selectedRequest?.request_id === request.request_id" @close="showAcceptModal = false">
             <template v-slot:header>
             <h5>Accept Request</h5>
@@ -31,8 +30,7 @@
             <button class="btn btn-danger" @click="acceptRequest(request.request_id)">Accept</button>
           </template>
         </Modal>
-  
-        <!-- Reject Modal -->
+
         <Modal :isVisible="showRejectModal && selectedRequest?.request_id === request.request_id" @close="showRejectModal = false">
             <template v-slot:header>
             <h5>Reject Request</h5>

@@ -1,4 +1,3 @@
-<!-- Modal.vue -->
 <template>
     <div v-if="isVisible" class="modal-overlay" @click.self="close">
       <div class="modal-content">

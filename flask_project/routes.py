@@ -30,7 +30,7 @@ def get_cached_data(key):
     """Retrieve cached data from Redis."""
     cached_data = redis_client.get(key)
     if cached_data:
-        return json.loads(cached_data) # type: ignore
+        return json.loads(cached_data) 
     return None
 
 csrf = CSRFProtect(app)
@@ -48,8 +48,8 @@ def auth_status():
             user_info = {
                   'isAuthenticated': 'True',
                   'role': current_user.role,
-                  'username':   customer.username, # type: ignore
-                  'email': customer.email, # type: ignore
+                  'username':   customer.username, 
+                  'email': customer.email, 
                   'csrf':csrf_token,
                   'id': current_user.id
             }
@@ -58,8 +58,8 @@ def auth_status():
             user_info = {
                   'isAuthenticated': 'True',
                   'role': current_user.role,
-                  'username':   service_professional.username, # type: ignore
-                  'email': service_professional.email, # type: ignore
+                  'username':   service_professional.username, 
+                  'email': service_professional.email, 
                   'csrf':csrf_token,
                   'id': current_user.id
             }
@@ -68,8 +68,8 @@ def auth_status():
             user_info = {
                   'isAuthenticated': 'True',
                   'role': current_user.role,
-                  'username':   admin.username, # type: ignore
-                  'email': admin.email, # type: ignore
+                  'username':   admin.username, 
+                  'email': admin.email, 
                   'csrf':csrf_token,
                   'id': current_user.id
             }
@@ -239,7 +239,7 @@ def view_service_requests():
                         'date_of_request': datetime.fromisoformat(sr['date_of_request']),
                         'date_of_completion': datetime.fromisoformat(sr['date_of_completion'])
                     }
-                for sr in get_cached_data(cache_key) # type: ignore
+                for sr in get_cached_data(cache_key) 
             ]
             cached_service_requests = service_requests
       return jsonify(cached_service_requests), 200
@@ -274,14 +274,14 @@ def approve_service_professional(waiting_id):
 
     waiting_entry = WaitingList.query.get_or_404(waiting_id)
     email = waiting_entry.email
-    send_waiting_confirm_mail.apply_async(args=["Approved",email]) # type: ignore
+    send_waiting_confirm_mail.apply_async(args=["Approved",email]) 
     approved_sp = Service_Professional(
-        username=waiting_entry.username, # type: ignore
-        email=waiting_entry.email, # type: ignore
-        password=waiting_entry.password, # type: ignore
-        description=waiting_entry.description, # type: ignore
-        experience=waiting_entry.experience, # type: ignore
-        service_id=waiting_entry.service_id # type: ignore
+        username=waiting_entry.username, 
+        email=waiting_entry.email, 
+        password=waiting_entry.password, 
+        description=waiting_entry.description, 
+        experience=waiting_entry.experience, 
+        service_id=waiting_entry.service_id 
     )
     try:
         db.session.add(approved_sp)
@@ -303,7 +303,7 @@ def reject_service_professional(waiting_id):
 
     waiting_entry = WaitingList.query.get_or_404(waiting_id)
     email = waiting_entry.email
-    send_waiting_confirm_mail.apply_async(args=["Rejected",email]) # type: ignore
+    send_waiting_confirm_mail.apply_async(args=["Rejected",email]) 
     try:
         db.session.delete(waiting_entry)
         redis_client.delete("view_pending_professional_requests_key")
@@ -343,11 +343,11 @@ def register():
         
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         customer = Customer(
-            username=form.username.data, # type: ignore
-            email=form.email.data, # type: ignore
-            address=form.address.data, # type: ignore
-            contact=form.contact.data, # type: ignore
-            password=hashed_password # type: ignore
+            username=form.username.data, 
+            email=form.email.data, 
+            address=form.address.data, 
+            contact=form.contact.data, 
+            password=hashed_password 
         )
 
         try:
@@ -443,12 +443,12 @@ def sp_register():
 
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         waiting_entry = WaitingList(
-            username=form.username.data, # type: ignore
-            email=form.email.data, # type: ignore
-            password=hashed_password, # type: ignore
-            description=form.description.data, # type: ignore
-            experience=form.experience.data, # type: ignore
-            service_id=int(form.service.data) # type: ignore
+            username=form.username.data, 
+            email=form.email.data, 
+            password=hashed_password, 
+            description=form.description.data, 
+            experience=form.experience.data, 
+            service_id=int(form.service.data) 
         )
 
         if proof_file:
@@ -536,7 +536,7 @@ def search_results_service():
     else:
         services = Service.query.filter(func.lower(Service.name).ilike(f"%{query.lower()}%")).all()
         services = [{'id': service.id, 'name': service.name, 'price': service.price, 'description': service.description} for service in services]
-        services.sort(key=lambda x: x.get('id'), reverse=False) # type: ignore
+        services.sort(key=lambda x: x.get('id'), reverse=False) 
         
         cache_data(cache_key, services, timeout=300)  
 
@@ -557,7 +557,7 @@ def search_results_service_professional():
     else:
         service_professionals = Service_Professional.query.filter(func.lower(Service_Professional.username).ilike(f"%{query.lower()}%")).all()
         service_professionals = [{'id': service_professional.id, 'name': service_professional.username, 'email': service_professional.email, 'description': service_professional.description, 'experience': service_professional.experience, 'date_created': datetime.isoformat(service_professional.date_created)} for service_professional in service_professionals]
-        service_professionals.sort(key=lambda x: x.get('id'), reverse=False) # type: ignore
+        service_professionals.sort(key=lambda x: x.get('id'), reverse=False) 
         
         cache_data(cache_key, service_professionals, timeout=300)
 
@@ -570,7 +570,7 @@ def search_results_service_professional():
 
 @app.route('/media/<path:filename>')
 def serve_static(filename):
-    return send_from_directory(current_app.static_folder, filename) # type: ignore
+    return send_from_directory(current_app.static_folder, filename) 
 
 
 def save_picture(form_picture, role):
@@ -668,7 +668,7 @@ def services():
     services_ = cached_services
   else:
      services_ = [service.get_as_dict() for service in Service.query.all()]
-     services_.sort(key=lambda x: x.get('id'), reverse=False) # type: ignore
+     services_.sort(key=lambda x: x.get('id'), reverse=False) 
      cache_data(cache_key, services_, timeout=300)
   return jsonify(services_), 200
 
@@ -684,9 +684,9 @@ def new_service():
             return jsonify({"message": "Service with that name already exists!"}), 400
         
         service = Service(
-            name=form.name.data,  # type: ignore
-            description=form.description.data, # type: ignore# type: ignore
-            price=form.price.data # type: ignore
+            name=form.name.data,  
+            description=form.description.data, 
+            price=form.price.data 
         )
         db.session.add(service)
         db.session.commit()
@@ -711,9 +711,9 @@ def update_service(service_id):
 
     if form.validate():
         try:
-            service.name = form.name.data # type: ignore
-            service.description = form.description.data # type: ignore
-            service.price = form.price.data # type: ignore
+            service.name = form.name.data 
+            service.description = form.description.data 
+            service.price = form.price.data 
             db.session.commit()
             redis_client.delete("services_key")
             redis_client.delete(f"service:{service_id}")
@@ -846,11 +846,11 @@ def request_service(service_id):
     date_of_completion = date_of_request + duration_timedelta
 
     new_request = Service_Request(
-        date_of_request=date_of_request, # type: ignore
-        customer_id=current_user.id,  # type: ignore
-        service_id=service_id,  # type: ignore
-        date_of_completion=date_of_completion,  # type: ignore
-        service_status="requested"  # type: ignore
+        date_of_request=date_of_request, 
+        customer_id=current_user.id,  
+        service_id=service_id,  
+        date_of_completion=date_of_completion,  
+        service_status="requested"  
     )
     db.session.add(new_request)
     db.session.commit()
@@ -870,13 +870,13 @@ def mark_request_as_complete(request_id):
       return jsonify({"error": "Access Denied! Only Customers can view requested services"}), 403
    request = Service_Request.query.filter_by(id=request_id).first()
 
-   if request.service_status != "assigned": # type: ignore
+   if request.service_status != "assigned": 
         return jsonify({"error": "Service request is not yet assigned. Please wait to get it assigned first."}), 403
     
    sr = request.service_professional
    active_key = f"active_services_{sr.id}"
 
-   request.service_status = "completed" # type: ignore
+   request.service_status = "completed" 
    cache_key = f"past_services_{current_user.role}_{current_user.id}"
    redis_client.delete(cache_key)
    redis_client.delete(active_key)
@@ -896,7 +896,7 @@ def submit_remarks(request_id):
     if not remark_text:
         return jsonify({"errors": {"remark": ["Remark cannot be empty."]}}), 400
 
-    remark = Remarks(remarks=remark_text, service_request_id=request_id) # type: ignore
+    remark = Remarks(remarks=remark_text, service_request_id=request_id) 
     db.session.add(remark)
     db.session.commit()
     cache_key = "cached_remarks"
@@ -917,9 +917,9 @@ def remarks():
         f = []
         for remark in remarks:
             service_request = Service_Request.query.filter_by(id=remark.service_request_id).first_or_404()
-            service_name = Service.query.filter_by(id=service_request.service_id).first().name  # type: ignore
-            service_professional_name = Service_Professional.query.filter_by(id=service_request.service_professional_id).first().username  # type: ignore
-            customer_name = Customer.query.filter_by(id=service_request.customer_id).first().username  # type: ignore
+            service_name = Service.query.filter_by(id=service_request.service_id).first().name  
+            service_professional_name = Service_Professional.query.filter_by(id=service_request.service_professional_id).first().username  
+            customer_name = Customer.query.filter_by(id=service_request.customer_id).first().username  
             
             f.append({
                 'service_name': service_name,
@@ -1014,7 +1014,7 @@ def pending_requests():
                 'service_status': service_status,
                 'date_of_request': date_of_request,
                 'date_of_completion': date_of_completion
-            })  # type: ignore
+            })  
 
         cache_data(cache_key, details, timeout=300)
 
@@ -1027,7 +1027,7 @@ def trigger_export():
     return jsonify({"error": "Access Denied! Only Service Professionals can accept requested services"}), 403
    
    professional_id = current_user.id
-   task = export_as_csv.apply_async(args=[professional_id]) # type: ignore
+   task = export_as_csv.apply_async(args=[professional_id]) 
    return jsonify({"message": "Export Triggered"}), 200
 
 @app.route('/accept-request/<int:request_id>/<int:service_professional_id>', methods=['GET', 'POST'])
@@ -1037,11 +1037,11 @@ def accept_request(request_id, service_professional_id):
       return jsonify({"error": "Access Denied! Only Service Professionals can accept requested services"}), 403
    
    request = Service_Request.query.filter_by(id=request_id).first()
-   request.service_professional_id = service_professional_id # type: ignore
-   request.service_professional = Service_Professional.query.filter_by(id=service_professional_id).first()  # type: ignore
-   request.service_status = "assigned" # type: ignore
+   request.service_professional_id = service_professional_id 
+   request.service_professional = Service_Professional.query.filter_by(id=service_professional_id).first()  
+   request.service_status = "assigned" 
 
-   cache_key = f"customer_requests_{request.customer.id}" # type: ignore
+   cache_key = f"customer_requests_{request.customer.id}" 
    redis_client.delete(cache_key)
       
    db.session.commit()
@@ -1062,11 +1062,11 @@ def reject_request(request_id, service_professional_id):
    
    
    request = Service_Request.query.filter_by(id=request_id).first()
-   request.service_professional_id = service_professional_id # type: ignore
-   request.service_professional = Service_Professional.query.filter_by(id=service_professional_id).first()  # type: ignore
-   request.service_status = "rejected" # type: ignore
+   request.service_professional_id = service_professional_id 
+   request.service_professional = Service_Professional.query.filter_by(id=service_professional_id).first()  
+   request.service_status = "rejected" 
 
-   cache_key = f"customer_requests_{request.customer.id}" # type: ignore
+   cache_key = f"customer_requests_{request.customer.id}" 
    redis_client.delete(cache_key)
       
    db.session.commit()
@@ -1116,7 +1116,7 @@ def active_services():
                         'date_of_request': datetime.fromisoformat(sr['date_of_request']),
                         'date_of_completion': datetime.fromisoformat(sr['date_of_completion'])
                     }
-                for sr in get_cached_data(cache_key) # type: ignore
+                for sr in get_cached_data(cache_key) 
             ]
     return jsonify(active_services), 200
 
@@ -1177,7 +1177,7 @@ def past_services():
                         'date_of_request': datetime.fromisoformat(sr['date_of_request']),
                         'date_of_completion': datetime.fromisoformat(sr['date_of_completion'])
                     }
-                for sr in get_cached_data(cache_key) # type: ignore
+                for sr in get_cached_data(cache_key) 
             ]
     return jsonify(past_services), 200
 
@@ -1206,7 +1206,7 @@ def customer_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Service Names availed')
    picture_path = os.path.join(app.root_path, f'static/graphs/one.png')
@@ -1224,7 +1224,7 @@ def customer_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Service Status')
    picture_path = os.path.join(app.root_path, f'static/graphs/two.png')
@@ -1252,7 +1252,7 @@ def sp_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Customer Names involved')
    picture_path = os.path.join(app.root_path, f'static/graphs/one.png')
@@ -1270,7 +1270,7 @@ def sp_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Service Status offered')
    picture_path = os.path.join(app.root_path, f'static/graphs/two.png')
@@ -1298,7 +1298,7 @@ def admin_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Customer Names involved')
    picture_path = os.path.join(app.root_path, f'static/graphs/one.png')
@@ -1316,7 +1316,7 @@ def admin_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Service Status offered')
    picture_path = os.path.join(app.root_path, f'static/graphs/two.png')
@@ -1334,7 +1334,7 @@ def admin_graphs():
 
    # Pie chart
    plt.figure(figsize=(8, 8))
-   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) # type: ignore
+   plt.pie(value_counts.values(), labels=value_counts.keys(), autopct='%1.1f%%', startangle=140) 
    plt.axis('equal')
    plt.title('Distribution of Service Professional Names with requests involved')
    picture_path = os.path.join(app.root_path, f'static/graphs/three.png')

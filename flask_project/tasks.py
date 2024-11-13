@@ -61,8 +61,8 @@ def send_waiting_confirm_mail(status, email):
         mail.send(msg)
     return "Mail Sent"
 
-@celery.on_after_configure.connect # type: ignore
+@celery.on_after_configure.connect 
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=9, minute=0), send_daily_reminders.s()) # type: ignore
+    sender.add_periodic_task(crontab(hour=9, minute=0), send_daily_reminders.s()) 
     
-    sender.add_periodic_task(crontab(hour=9, minute=0, day_of_month='1'), send_monthly_report.s()) # type: ignore
+    sender.add_periodic_task(crontab(hour=9, minute=0, day_of_month='1'), send_monthly_report.s()) 

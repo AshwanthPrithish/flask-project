@@ -1,4 +1,3 @@
-<!-- CustomerRequests.vue -->
 <template>
     <div>
         <div v-if="errorMessage" class="alert alert-danger" role="alert">

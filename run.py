@@ -10,7 +10,7 @@ def db_setup_rbac():
         if not admin_list:
             # Create an admin user
             hashed_password = bcrypt.generate_password_hash('admin').decode('utf-8')
-            admin_user = Admin(id=-1, username='admin', email='admin@test.com', password=hashed_password) # type: ignore
+            admin_user = Admin(id=-1, username='admin', email='admin@test.com', password=hashed_password) 
             db.session.add(admin_user)
             db.session.commit()
 
@@ -19,12 +19,12 @@ def db_setup_rbac():
         customer_list = Customer.query.all()
         if not customer_list:
             dummy_customer = Customer(
-                id=1001, # type: ignore
-                username='dummy_customer', # type: ignore
-                password='dummy_password', # type: ignore
-                address="123 Dummy Street, Nowhere", # type: ignore
-                email='dummy_customer@gmail.com', # type: ignore
-                contact='1234565432' # type: ignore
+                id=1001, 
+                username='dummy_customer', 
+                password='dummy_password', 
+                address="123 Dummy Street, Nowhere", 
+                email='dummy_customer@gmail.com', 
+                contact='1234565432' 
             )
             db.session.add(dummy_customer)
             db.session.commit()
@@ -34,8 +34,8 @@ def db_setup_rbac():
         if not service_list:
             # Create three dummy services
             services = [
-                Service(name='Cleaning', price='50', description='cleaning service'), # type: ignore
-                 Service(name='Washing', price='50', description='washing service'), # type: ignore
+                Service(name='Cleaning', price='50', description='cleaning service'), 
+                 Service(name='Washing', price='50', description='washing service'), 
             ]
             db.session.bulk_save_objects(services)  # Bulk add services
             db.session.commit()
@@ -50,13 +50,13 @@ def db_setup_rbac():
             x = 0
             for service_id in service_ids:
                 dummy_service_professional = Service_Professional(
-                    id=10001,  # Ensure unique IDs # type: ignore
-                    username=f'dummy_professional_{x}', # type: ignore
-                    password='dummy_password', # type: ignore
-                    email=f'dummy_professional_{x}@gmail.com', # type: ignore
-                    description='Experienced household service provider', # type: ignore
-                    experience="5 years", # type: ignore
-                    service_id=service_id  # Associate with the service # type: ignore
+                    id=10001,  # Ensure unique IDs 
+                    username=f'dummy_professional_{x}', 
+                    password='dummy_password', 
+                    email=f'dummy_professional_{x}@gmail.com', 
+                    description='Experienced household service provider', 
+                    experience="5 years", 
+                    service_id=service_id  # Associate with the service 
                 )
                 x += 1
                 db.session.add(dummy_service_professional)

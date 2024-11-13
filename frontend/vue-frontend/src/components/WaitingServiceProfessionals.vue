@@ -22,7 +22,6 @@
         <b>Experience:</b> {{ professional.experience }}<br />
         <b>Service Name:</b> {{ professional.service_name }}<br />
   
-        <!-- Accept Modal -->
         <Modal :isVisible="showAcceptModal" @close="showAcceptModal = false">
             <template v-slot:header>
             <h5>Accept Professional</h5>
@@ -34,7 +33,6 @@
           </template>
         </Modal>
   
-        <!-- Reject Modal -->
         <Modal :isVisible="showRejectModal" @close="showRejectModal = false">
             <template v-slot:header>
             <h5>Reject Service Professional</h5>
