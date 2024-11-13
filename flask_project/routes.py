@@ -651,6 +651,7 @@ def sp_account():
         try:
             db.session.commit()
             redis_client.delete("view_service_professionals_key")
+            redis_client.delete("pending_requests")
             return jsonify({"message": "Account updated successfully"}), 200
         except Exception:
             db.session.rollback()
